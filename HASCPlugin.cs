@@ -2,7 +2,7 @@ using System;
 
 namespace HASCPlugin
 {
-    public class Class1
+    public class HASCPlugin
     {
     }
 }
