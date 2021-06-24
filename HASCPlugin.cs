@@ -1,4 +1,5 @@
 using System;
+using System.Windows.Forms;
 
 using Plugin;
 
@@ -39,7 +40,14 @@ namespace HASCPlugin
 
         public void Run()
         {
-
+            using (OpenFileDialog dialog = new OpenFileDialog())
+            {
+                dialog.Filter = "Text File (*.csv)|*.csv";
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    new DataRowCreator(Owner, dialog.FileName);
+                }
+            }
         }
 
         public void ExecuteTemplate(History history)

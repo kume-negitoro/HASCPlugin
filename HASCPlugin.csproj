@@ -5,6 +5,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Plugin" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="Microsoft.VisualBasic" />
   </ItemGroup>
 
 </Project>
