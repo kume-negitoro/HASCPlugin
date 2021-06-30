@@ -34,6 +34,23 @@ namespace HASCPlugin {
             this.RowPanel.Paint += new PaintEventHandler(HandlePaint);
         }
 
+        private double CommonOffset {
+            get
+            {
+                return timestampList[0];
+            }
+        }
+
+        private IEnumerable<double> TimestampWithoutCommonOffset {
+            get
+            {
+                foreach(var timestamp in timestampList)
+                {
+                    yield return timestamp - CommonOffset;
+                }
+            }
+        }
+
         private void CalcMinMaxValue()
         {
             var min = Double.MaxValue;
@@ -53,7 +70,6 @@ namespace HASCPlugin {
             using (Graphics g = Graphics.FromImage(bmp))
             using (Pen pen = new Pen(Color.Black, 1))
             {
-                // MessageBox.Show("width: " + ((Control)sender).Width + ", height: " + ((Control)sender).Height);
                 try
                 {
                     //表示領域のラインの点を算出する
@@ -68,52 +84,30 @@ namespace HASCPlugin {
                 }
             }
         }
-
         private List<Point> GetDrawPoints()
         {
             var points = new List<Point>();
 
-            double elapsed = 0;
-            int pixel = 0;
-            
-            if(elapsed >= host.FieldStartTime)
+            var i = 0; // Linqを使いたかった
+            foreach(var timestamp in TimestampWithoutCommonOffset)
             {
-                points.Add(new Point(
-                    pixel++,
-                    (int)HASCDataRow.LinearMap(valueList[0], -1.5, 1.5, this.RowHeight, 0)
-                ));
-            }
-            var i = 1;
-            for(; i < valueList.Count; i++)
-            {
-                elapsed += timestampList[i] - timestampList[i-1];
-
-                // // ゴミのような実装
-                if(elapsed <= host.FieldStartTime) continue;
-                if(elapsed > host.FieldEndTime) break;
-
-                // 右辺は横軸のピクセル数からプロット毎の経過時間を算出する(例えばppsが60であれば2ピクセル目は2/60秒)
-                // delta(CSVデータの時間で見て、合計の経過時間を表す)がプロット毎の経過時間を超えていたらプロットする
-                if(elapsed >= (pixel * (1 / host.PixelPerSec)))
+                // 表示範囲の開始時間までスキップ
+                if(timestamp > host.FieldStartTime)
                 {
-                    var index = (int)HASCDataRow.LinearMap(elapsed - host.FieldStartTime, host.FieldStartTime, host.FieldEndTime, 0, this.RowPanel.Width);
-                    points.Add(new Point(
-                        pixel++,
-                        // (int)(valueList[i] * 100)
-                        (int)HASCDataRow.LinearMap(valueList[i], -1.5, 1.5, this.RowHeight, 0)
-                    ));
+                    points.Add(
+                        new Point(
+                            (int)((timestamp - host.FieldStartTime) * host.PixelPerSec),
+                            (int)Utils.LinearMap(valueList[i], -1.5, 1.5, this.RowHeight, 0)
+                        )
+                    );
                 }
-            }
-            // MessageBox.Show("i: " + i);
+                i++;
 
-            // MessageBox.Show("ExpectedWidth: " + this.RowPanel.Width + ", RealWidth: " + pixel * host.PixelPerSec);
+                // 表示範囲を超えたら修了
+                if(timestamp > host.FieldEndTime) break;
+            }
 
             return points;
-        }
-
-        public static double LinearMap(double value, double start1, double end1, double start2, double end2)
-        {
-            return start2 + (end2 - start2) * ((value - start1) / (end1 - start1));
         }
     }
 }
