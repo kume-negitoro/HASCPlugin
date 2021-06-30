@@ -11,7 +11,7 @@ namespace HASCPlugin
         {
             get
             {
-                return "HASCPlugin";
+                return "HASC_ACCPlugin";
             }
         }
 
@@ -29,7 +29,7 @@ namespace HASCPlugin
         {
             get
             {
-                return "HASCプラグイン";
+                return "HASC (CSV) から加速度を読み込む";
             }
         }
 
