@@ -11,7 +11,7 @@ namespace HASCPlugin
         {
             get
             {
-                return "HASC_ACCPlugin";
+                return "HASC_ACC_Plugin";
             }
         }
 
