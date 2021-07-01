@@ -109,7 +109,7 @@ namespace HASCPlugin {
         private void HandleOffsetItemClick(object sender, EventArgs e)
         {
             var offsetString = Interaction.InputBox(
-                "オフセットを入力してください",
+                "オフセットを実数値で入力してください (秒)",
                 "同期オフセットの設定",
                 "" + Offset,
                 -1,
