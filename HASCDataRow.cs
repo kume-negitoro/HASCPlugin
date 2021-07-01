@@ -3,12 +3,31 @@ using System.Text;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
+using Microsoft.VisualBasic;
 
 using Plugin;
 
 namespace HASCPlugin {
+
+    public class ChangeOffsetArgs : EventArgs
+    {
+        public double Offset
+        {
+            get; set;
+        }
+
+        public ChangeOffsetArgs(double offset)
+        {
+            Offset = offset;
+        }
+    }
+
     public sealed class HASCDataRow : DataRow {
         private IPluginHost host;
+        
+        public event EventHandler<ChangeOffsetArgs> ChangeOffset;
+
+        private double offset = 0;
 
         private readonly List<double> timestampList = default;
         private readonly List<double> valueList = default;
@@ -29,9 +48,32 @@ namespace HASCPlugin {
 
             CalcMinMaxValue();
 
+            // コンテキストメニューの追加
+            var separator = new ToolStripSeparator();
+            var offsetItem = new ToolStripMenuItem();
+            offsetItem.Text = "オフセットを設定";
+            offsetItem.Name = "offsetItem";
+            offsetItem.Click += new EventHandler(HandleOffsetItemClick);
+            ContextMenuItems.Add(separator);
+            ContextMenuItems.Add(offsetItem);
+
             this.RowHeight *= 6;
 
             this.RowPanel.Paint += new PaintEventHandler(HandlePaint);
+        }
+
+        public double Offset {
+            get
+            {
+                return offset;
+            }
+            set
+            {
+                if(offset == value) return;
+                offset = value;
+                ChangeOffset(this, new ChangeOffsetArgs(offset));
+                RowPanel.Refresh();
+            }
         }
 
         private double CommonOffset {
@@ -64,6 +106,33 @@ namespace HASCPlugin {
             this.maxValue = max;
         }
 
+        private void HandleOffsetItemClick(object sender, EventArgs e)
+        {
+            var offsetString = Interaction.InputBox(
+                "オフセットを入力してください",
+                "同期オフセットの設定",
+                "" + Offset,
+                -1,
+                -1
+            );
+
+            if(offsetString == null) return;
+
+            double offsetTime;
+            try
+            {
+                offsetTime = Double.Parse(offsetString);
+            }
+            catch
+            {
+                MessageBox.Show("オフセット値が不正です");
+                return;
+            }
+            
+            Offset = offsetTime;
+            ChangeOffset(this, new ChangeOffsetArgs(offset));
+        }
+
         private void HandlePaint(object sender, PaintEventArgs e)
         {
             using (Bitmap bmp = new Bitmap(((Control)sender).Width, ((Control)sender).Height))
@@ -92,11 +161,11 @@ namespace HASCPlugin {
             foreach(var timestamp in TimestampWithoutCommonOffset)
             {
                 // 表示範囲の開始時間までスキップ
-                if(timestamp > host.FieldStartTime)
+                if(timestamp + Offset > host.FieldStartTime)
                 {
                     points.Add(
                         new Point(
-                            (int)((timestamp - host.FieldStartTime) * host.PixelPerSec),
+                            (int)((timestamp + Offset - host.FieldStartTime) * host.PixelPerSec),
                             (int)Utils.LinearMap(valueList[i], -1.5, 1.5, this.RowHeight, 0)
                         )
                     );
@@ -104,7 +173,7 @@ namespace HASCPlugin {
                 i++;
 
                 // 表示範囲を超えたら修了
-                if(timestamp > host.FieldEndTime) break;
+                if(timestamp + Offset > host.FieldEndTime) break;
             }
 
             return points;

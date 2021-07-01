@@ -19,6 +19,10 @@ namespace HASCPlugin
         private List<double> yAxisList = new List<double>();
         private List<double> zAxisList = new List<double>();
 
+        private HASCDataRow xAxisRow;
+        private HASCDataRow yAxisRow;
+        private HASCDataRow zAxisRow;
+
         public DataRowCreator(IPluginHost host, string filepath)
         {
             this.host = host;
@@ -55,12 +59,28 @@ namespace HASCPlugin
             }
         }
 
+        private void HandleChangeOffset(object sender, ChangeOffsetArgs args)
+        {
+            xAxisRow.Offset = args.Offset;
+            yAxisRow.Offset = args.Offset;
+            zAxisRow.Offset = args.Offset;
+        }
+
         private void AddRows()
         {
             var filename = Path.GetFileName(filepath);
-            host.DataRows.Add(new HASCDataRow(host, filename + "_x", timestampList, xAxisList));
-            host.DataRows.Add(new HASCDataRow(host, filename + "_y", timestampList, yAxisList));
-            host.DataRows.Add(new HASCDataRow(host, filename + "_z", timestampList, zAxisList));
+            
+            xAxisRow = new HASCDataRow(host, filename + "_x", timestampList, xAxisList);
+            yAxisRow = new HASCDataRow(host, filename + "_y", timestampList, yAxisList);
+            zAxisRow = new HASCDataRow(host, filename + "_z", timestampList, zAxisList);
+
+            xAxisRow.ChangeOffset += HandleChangeOffset;
+            yAxisRow.ChangeOffset += HandleChangeOffset;
+            zAxisRow.ChangeOffset += HandleChangeOffset;
+
+            host.DataRows.Add(xAxisRow);
+            host.DataRows.Add(yAxisRow);
+            host.DataRows.Add(zAxisRow);
         }
     }
 }
