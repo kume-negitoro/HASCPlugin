@@ -1,6 +1,6 @@
 # HASC_ACC_Plugin
 
-これは iCopusStudio で HASC から出力した CSV 形式の加速度をインポートするためのプラグインです。
+これは iCorpusStudio で HASC から出力した CSV 形式の加速度をインポートするためのプラグインです。
 
 
 # Install
